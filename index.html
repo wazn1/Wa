@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جوهرة وازن للذهب والمجوهرات - لوحة الأسعار المباشرة</title>
+    <style>
+        :root {
+            --gold-primary: #b89146;
+            --dark-brown: #2c2416;
+            --text-gray: #5a5a5a;
+            --border-color: #d8d8d3; 
+            --bg-custom: #F1F1EC;   
+            --up-green: #2e7d32;
+            --down-red: #c62828;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-custom);
+            color: var(--dark-brown);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .dashboard-container {
+            width: 1280px;
+            height: 450px;
+            background: var(--bg-custom);
+            display: flex;
+            box-sizing: border-box;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.05);
+        }
+        .right-panel {
+            width: 45%;
+            height: 100%;
+            padding: 20px 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            border-left: 1px solid var(--border-color);
+            background: #ffffff;
+        }
+        .header-block { text-align: center; }
+        .main-title { font-size: 1.8rem; margin: 0; font-weight: bold; }
+        .tagline { font-size: 1rem; color: var(--gold-primary); font-weight: bold; }
+
+        .prices-block { display: flex; flex-direction: column; gap: 12px; }
+        .price-card {
+            background: var(--bg-custom);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .grams-row { display: flex; gap: 10px; }
+        .gram-card {
+            flex: 1;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px 5px;
+            text-align: center;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
+        }
+        .label { color: var(--text-gray); font-size: 0.95rem; }
+        
+        .value { color: var(--gold-primary); font-size: 1.5rem; transition: color 0.3s ease; } 
+        .ounce-value { color: var(--dark-brown); font-size: 1.8rem; transition: color 0.3s ease; } 
+
+        .price-up { color: var(--up-green) !important; }
+        .price-down { color: var(--down-red) !important; }
+
+        .left-panel {
+            width: 55%;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .tradingview-widget-container {
+            width: 100%;
+            height: 100%;
+        }
+        .footer-info { font-size: 0.8rem; color: #7a7a75; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <div class="right-panel">
+        <div class="header-block">
+            <h1 class="main-title">أسعار الذهب مباشرة</h1>
+            <div class="tagline">جوهرة وازن (SAR)</div>
+        </div>
+
+        <div class="prices-block">
+            <div class="price-card">
+                <span class="label ounce-label">الأونصة العالمية</span>
+                <span class="value ounce-value" id="local-ounce">جاري جلب السعر...</span>
+            </div>
+            
+            <div class="grams-row">
+                <div class="gram-card"><span class="label">ذهب عيار ٢٤</span><span class="value" id="price-g24">--</span></div>
+                <div class="gram-card"><span class="label">ذهب عيار ٢١</span><span class="value" id="price-g21">--</span></div>
+                <div class="gram-card"><span class="label">ذهب عيار ١٨</span><span class="value" id="price-g18">--</span></div>
+            </div>
+        </div>
+        <div class="footer-info" id="update-time">تحديث فوري وتلقائي عبر معادلة البورصة الحية</div>
+    </div>
+
+    <div class="left-panel">
+        <div class="tradingview-widget-container">
+            <div id="tradingview_gold_live"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+            <script type="text/javascript">
+            const widget = new TradingView.widget({
+                "width": "100%",
+                "height": "100%",
+                "symbol": "FOREXCOM:XAUUSD",
+                "interval": "1",
+                "timezone": "Asia/Riyadh",
+                "theme": "light",
+                "style": "3",
+                "locale": "ar",
+                "enable_publishing": false,
+                "hide_legend": true,
+                "save_image": false,
+                "container_id": "tradingview_gold_live"
+            });
+
+            // ==========================================
+            // 🛠️ لوحة التحكم في زيادة العيارات:
+            // ==========================================
+            const customMarkup24 = 6;  // الزيادة المضافة لعيار 24
+            const customMarkup21 = 4.58;    // الزيادة المضافة لعيار 21
+            const customMarkup18 = 3.75;  // الزيادة المضافة لعيار 18
+            // ==========================================
+            
+            let lastOuncePrice = null;
+            let resetTimeout = null; 
+
+            function convertToArabicNumbers(num) {
+                const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+                return num.toString().replace(/[0-9]/g, function (w) {
+                    return arabicNumbers[+w];
+                });
+            }
+
+            async function calculateGrams() {
+                try {
+                    // سحب سعر الذهب الفوري والمباشر (Spot Gold) المتطابق تماماً مع منصات التداول والرسومات البيانية
+                    const res = await fetch('https://api.gold-api.com/price/XAU');
+                    const data = await res.json();
+                    let ounceUSD = parseFloat(data.price);
+
+                    if (ounceUSD && !isNaN(ounceUSD)) {
+                        const usdToSar = 3.75; 
+                        const ounceSAR = ounceUSD * usdToSar; 
+                        
+                        // 1. حساب السعر الصافي للغرام بناءً على السعر العالمي المتطابق
+                        const pureG24 = ounceSAR / 31.1034768;
+                        const pureG21 = pureG24 * 0.875;
+                        const pureG18 = pureG24 * 0.75;
+
+                        // 2. إضافة المصنعية/الزيادة المخصصة للمحل
+                        const g24 = pureG24 + customMarkup24;
+                        const g21 = pureG21 + customMarkup21;
+                        const g18 = pureG18 + customMarkup18;
+
+                        let directionMarker = "";
+                        let colorClass = "";
+
+                        if (lastOuncePrice !== null) {
+                            if (ounceUSD > lastOuncePrice) {
+                                directionMarker = " 🔺";
+                                colorClass = "price-up";
+                            } else if (ounceUSD < lastOuncePrice) {
+                                directionMarker = " 🔻";
+                                colorClass = "price-down";
+                            }
+                        }
+                        
+                        lastOuncePrice = ounceUSD;
+
+                        const ounceTextWithMarker = convertToArabicNumbers(Math.round(ounceUSD).toLocaleString()) + " دولار" + directionMarker;
+                        const ounceTextClean = convertToArabicNumbers(Math.round(ounceUSD).toLocaleString()) + " دولار";
+
+                        const g24Text = convertToArabicNumbers(g24.toFixed(2)) + " ر.س";
+                        const g21Text = convertToArabicNumbers(g21.toFixed(2)) + " ر.س";
+                        const g18Text = convertToArabicNumbers(g18.toFixed(2)) + " ر.س";
+
+                        const ounceEl = document.getElementById('local-ounce');
+                        const g24El = document.getElementById('price-g24');
+                        const g21El = document.getElementById('price-g21');
+                        const g18El = document.getElementById('price-g18');
+
+                        ounceEl.innerText = ounceTextWithMarker;
+                        g24El.innerText = g24Text;
+                        g21El.innerText = g21Text;
+                        g18El.innerText = g18Text;
+
+                        if (resetTimeout) clearTimeout(resetTimeout);
+
+                        if (colorClass) {
+                            [ounceEl, g24El, g21El, g18El].forEach(el => el.classList.add(colorClass));
+
+                            // يختفي مؤشر اللون الأخضر/الأحمر والسهم بعد 3 ثوانٍ وتعود الشاشة لوضعها الهادئ
+                            resetTimeout = setTimeout(() => {
+                                ounceEl.innerText = ounceTextClean; 
+                                [ounceEl, g24El, g21El, g18El].forEach(el => {
+                                    el.classList.remove('price-up', 'price-down');
+                                });
+                            }, 3000); 
+                        } else {
+                            ounceEl.innerText = ounceTextClean;
+                            [ounceEl, g24El, g21El, g18El].forEach(el => {
+                                el.classList.remove('price-up', 'price-down');
+                            });
+                        }
+
+                        const now = new Date().toLocaleTimeString('ar-EG');
+                        document.getElementById('update-time').innerText = "آخر تحديث للأسعار الحية (شامل الإضافة): " + now;
+                    }
+                } catch (e) {
+                    console.log("جاري إعادة محاولة جلب التحديثات...");
+                }
+            }
+
+            calculateGrams();
+            setInterval(calculateGrams, 15000); 
+            </script>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
